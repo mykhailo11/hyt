@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+group 'org.hyt'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'com.googlecode.soundlibs', name: 'mp3spi', version: '1.9.5-1'
+    implementation group: 'org.jogamp.jogl', name: 'jogl-all-main', version: '2.3.2'
+    implementation group: 'org.jogamp.gluegen', name: 'gluegen-rt-main', version: '2.3.2'
+    implementation project(":HYTGraphics")
+}

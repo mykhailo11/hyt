@@ -2,6 +2,11 @@ package org.hyt;
 
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.FPSAnimator;
+import javazoom.jl.player.Player;
+import org.hyt.audio.BaseHYTAudioDevice;
+import org.hyt.audio.HYTAudioDevice;
+import org.hyt.audio.factory.HYTAudioDeviceFactory;
 import org.hyt.graphics.api.model.HYTGLAttribute;
 import org.hyt.graphics.api.model.HYTGLBuffer;
 import org.hyt.graphics.api.model.HYTGLData;
@@ -11,7 +16,12 @@ import org.hyt.model.HYTGLModel;
 import org.hyt.model.factory.HYTModelFactory;
 
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
 import javax.swing.*;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Map;
 
 public class Main {
@@ -113,21 +123,28 @@ public class Main {
 
     }*/
 
+    private static float _average(short[] nums) {
+        float average = 0;
+        for (short num : nums) {
+            average = (average + num) / 2.0f;
+        }
+        return average;
+    }
+
     public static void main(String[] args) {
 
-        HYTGLModel[] models = new HYTGLModel[25];
+        HYTGLModel[] models = new HYTGLModel[45];
 
         int index = 0;
 
-        for (int row = 0; row < 5; row++){
-            for (int column = 0; column < 5 && index < 25; column++, index++){
-                HYTGLModel model = HYTModelFactory.getHytGlModel();
-                model.setPosition(new float[]{(column - 2.0f) / 3.0f, (row - 2.0f) / 3.0f, 0.0f, 0.0f});
-                model.setState(row + column + 1.0f);
+        for (int column = -2; column < 3; column++) {
+            float multiplier = 1.0f + (float)Math.random() * 2.0f;
+            for (int row = -4; row < 5 && index < 45; row++, index++) {
+                HYTGLModel model = HYTModelFactory.getHytGlModel(multiplier);
+                model.setPosition(new float[]{(column) / 3.0f, row / 4.0f, 0.0f, 0.0f});
                 models[index] = model;
             }
         }
-
         HYTListener listener = new HYTListener(
                 models,
                 "C:\\Users\\mykhailo\\HYT\\HYTAu\\src\\main\\resources\\vsh.glsl",
@@ -137,19 +154,37 @@ public class Main {
         );
         GLProfile glProfile = GLProfile.get(GLProfile.GL4);
         GLCapabilities glCapabilities = new GLCapabilities(glProfile);
-        glCapabilities.setSampleBuffers(true);
-        glCapabilities.setNumSamples(16);
-        glCapabilities.setDoubleBuffered(true);
         glCapabilities.setBackgroundOpaque(true);
-        glCapabilities.setDoubleBuffered(true);
-        glCapabilities.setDepthBits(16);
         JFrame frame = new JFrame();
         GLCanvas canvas = new GLCanvas(glCapabilities);
+        FPSAnimator animator = new FPSAnimator(canvas, 30, true);
         canvas.addGLEventListener(listener);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.add(canvas);
         frame.setSize(400, 400);
         frame.setVisible(true);
+        animator.start();
+        try {
+            InputStream audioInput = new FileInputStream("C:\\Users\\mykhailo\\HYT\\kaskade-46.mp3");
+            try (AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioInput)) {
+                AudioFormat audioFormat = audioStream.getFormat();
+                HYTAudioDevice device = HYTAudioDeviceFactory.getHytAudioDevice();
+                device.add(
+                        (samples) -> {
+                            float result = Math.abs(_average(samples) - 10000) / 30000.0f + 0.1f;
+                            int count = (int)(result / 0.05f);
+                            for (int c = 0; c < count; c++){
+                                int chosen = (int)(Math.random() * 45);
+                                models[chosen].setState(result);
+                            }
+                        }
+                );
+                Player player = new Player(audioStream, device);
+                player.play();
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
     }
 
 }

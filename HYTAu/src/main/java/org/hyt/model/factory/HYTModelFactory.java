@@ -6,8 +6,8 @@ import org.hyt.model.HYTModel;
 
 public class HYTModelFactory {
 
-    public static HYTGLModel getHytGlModel(){
-        return new BaseHYTGLModel();
+    public static HYTGLModel getHytGlModel(float multiplier){
+        return new BaseHYTGLModel(multiplier);
     }
 
 }

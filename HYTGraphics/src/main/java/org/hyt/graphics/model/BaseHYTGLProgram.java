@@ -55,9 +55,33 @@ public class BaseHYTGLProgram implements HYTGLProgram {
             gl4.glDeleteShader(fragmentShader);
 
 
+            System.out.println(printProgramInfoLog(gl4, _program));
+
         } catch (Exception exception) {
             exception.printStackTrace();
         }
+    }
+
+    public String printProgramInfoLog(GL3 gl, int obj) {
+        // get the GL info log
+        final int logLen = getProgramParameter(gl, obj, GL3.GL_INFO_LOG_LENGTH);
+        if (logLen <= 0)
+            return "";
+
+        // Get the log
+        final int[] retLength = new int[1];
+        final byte[] bytes = new byte[logLen + 1];
+        gl.glGetProgramInfoLog(obj, logLen, retLength, 0, bytes, 0);
+        final String logMessage = new String(bytes);
+
+        return logMessage;
+    }
+
+    /** Gets a program parameter value */
+    public int getProgramParameter(GL3 gl, int obj, int paramName) {
+        final int params[] = new int[1];
+        gl.glGetProgramiv(obj, paramName, params, 0);
+        return params[0];
     }
 
     @Override
